@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--命名空间应该是对应接口的包名+类名 -->
+<mapper namespace="com.zhangguo.Spring61.mapping.BookTypeDAO">
+    <!--id应该是接口中的方法，结果类型如没有配置别名则应该使用全名称 -->
+	<select id="getAllBookTypes" resultType="BookType">
+	    select id, typeName from hive.test.booktypes
+	</select>
+	<select id="queryBookTypesBySql" parameterType="int" resultType="BookType">
+        select id,typeName from (select id,typeName from hive.test.booktypes where id between #{currIndex} and #{pageSize}) tt order by id
+	</select>
+	<insert id="add" parameterType="BookType">
+	    insert into hive.test.booktypes(typeName) values(#{typeName})
+	</insert>
+	
+	<insert id="add100" parameterType="java.lang.String">
+	     ${_parameter}
+	</insert>
+	
+</mapper>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:aop="http://www.springframework.org/schema/aop" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx" 
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-4.3.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+
+	<!--属性占位文件引入，可以通过${属性名}获得属性文件中的内容 -->
+	<context:property-placeholder location="classpath:db.properties" />
+
+	<!--定义一个jdbc数据源，创建一个驱动管理数据源的bean -->
+	<!-- <bean id="jdbcDataSource2" class="com.mchange.v2.c3p0.ComboPooledDataSource"
+		destroy-method="close">
+		<property name="driverClass" value="${jdbc.driver}" />
+		<property name="jdbcUrl" value="${jdbc.url}" />
+		<property name="user" value="${jdbc.uid}" />
+		<property name="password" value="${jdbc.pwd}" />
+		<property name="acquireIncrement" value="5"></property>
+		<property name="initialPoolSize" value="10"></property>
+		<property name="minPoolSize" value="5"></property>
+		<property name="maxPoolSize" value="20"></property>
+	</bean> -->
+
+	<bean id="jdbcDataSource" class="com.alibaba.druid.pool.DruidDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${jdbc.driver}" />
+		<property name="url" value="${jdbc.url}" />
+		<property name="username" value="${jdbc.uid}" />
+		<property name="password" value="${jdbc.pwd}" />
+	</bean>
+
+	<!--创建一个sql会话工厂bean，指定数据源 -->
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<!-- 指定数据源 -->
+		<property name="dataSource" ref="jdbcDataSource" />
+		<!--类型别名包，默认引入com.zhangguo.Spring61.entities下的所有类 -->
+		<property name="typeAliasesPackage" value="com.zhangguo.Spring61.entities"></property>
+		<!--指定sql映射xml文件的路径 -->
+		<property name="configLocation" value="classpath:mybatis-config.xml"></property>
+		<property name="mapperLocations"
+			value="classpath:com/zhangguo/Spring61/mapping/*Mapper.xml"></property>
+	</bean>
+
+	<!--自动扫描映射接口 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<!-- 指定sql会话工厂，在上面配置过的 -->
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+		<!-- 指定基础包，即自动扫描com.zhangguo.Spring61.mapping这个包以及它的子包下的所有映射接口类 -->
+		<property name="basePackage" value="com.zhangguo.Spring61.mapping"></property>
+	</bean>
+
+	<!-- 创建一个sqlSession对象 -->
+	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+		<constructor-arg index="0" ref="sqlSessionFactory" />
+	</bean>
+	
+	<bean id="ctxUtil" class="com.zhangguo.Spring61.action.CtxUtil"></bean>
+    
+    <!--创建一个BTDImpl对象 -->
+    <bean id="bTDImpl" class="com.zhangguo.Spring61.dao.BTDImpl">
+        <property name="sqlSession" ref="sqlSession"></property>
+    </bean>
+	
+	<!--声明式事务管理 -->
+	<bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+	    <property name="dataSource" ref="jdbcDataSource"></property>
+	</bean>
+	<!--声明支持使用注解管理事务 -->
+	<tx:annotation-driven transaction-manager="txManager"/>
+
+	<!--自动扫描组件 -->
+	<context:component-scan base-package="com.zhangguo.Spring61">
+	    <context:exclude-filter type="aspectj" expression="com.zhangguo.Spring61.dao.*"/>
+	</context:component-scan>
+	<aop:aspectj-autoproxy proxy-target-class="true"></aop:aspectj-autoproxy>
+</beans>
